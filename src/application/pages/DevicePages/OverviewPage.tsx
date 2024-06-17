@@ -18,12 +18,13 @@ import { Printer } from '@electricui/components-desktop'
 import { Switch } from '@electricui/components-desktop-blueprint'
 
 const layoutDescription = `
-  Chart Chart
-  Light Slider
+  Slider Chart1
+  Chart2 Chart2
 `
 
 export const OverviewPage = (props: RouteComponentProps) => {
   const ledStateDataSource = useMessageDataSource('led_state')
+  const angleSensorDS = useMessageDataSource('angle_sensor')
 
   return (
     <React.Fragment>
@@ -35,7 +36,27 @@ export const OverviewPage = (props: RouteComponentProps) => {
       <Composition areas={layoutDescription} gap={10} autoCols="1fr">
         {Areas => (
           <React.Fragment>
-            <Areas.Chart>
+
+            <Areas.Chart1>
+              <Card>
+                <ChartContainer height={"20vh"}>
+                  <LineChart
+                    dataSource={angleSensorDS}
+                    step='after'    
+                  />
+                  <RealTimeDomain
+                    window={10000}
+                    delay={100}
+                    yMin={-10}
+                    yMax={380}
+                  />
+                  <TimeAxis />
+                  <VerticalAxis />
+                </ChartContainer>
+              </Card>            
+            </Areas.Chart1>
+            
+            <Areas.Chart2>
               <Card>
                 <div style={{ textAlign: 'center', marginBottom: '1em' }}>
                   <b>LED State</b>
@@ -46,15 +67,9 @@ export const OverviewPage = (props: RouteComponentProps) => {
                   <TimeAxis />
                   <VerticalAxis />
                 </ChartContainer>
-              </Card>
-            </Areas.Chart>
 
-            <Areas.Light>
-              <LightBulb
-                containerStyle={{ margin: '20px auto', width: '80%' }}
-                width="40vw"
-              />
-            </Areas.Light>
+              </Card>
+            </Areas.Chart2>
 
             <Areas.Slider>
               <Card>
