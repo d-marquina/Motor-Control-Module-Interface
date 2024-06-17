@@ -17,6 +17,8 @@ declare global {
     MCM_test_flag: number
     MCM_motor_speed: number
 
+    settings: ModuleSettingsType
+
   }
   interface ElectricUIDeviceMetadataState {
     name: string
@@ -27,6 +29,14 @@ declare global {
 export type LEDSettings = {
   glow_time: number
   enable: number
+}
+
+// Module Settings
+export type ModuleSettingsType = {
+  begin_flag:number
+  end_flag: number
+  trigger_signal: number
+  refresh_rate: number
 }
 
 // This exports these types into the dependency tree.

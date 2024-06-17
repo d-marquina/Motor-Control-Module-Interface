@@ -1,6 +1,6 @@
 import { Codec, Message, MessageMetadata } from '@electricui/core'
 
-import { LEDSettings } from '../../application/typedState'
+import { LEDSettings, ModuleSettingsType } from '../../application/typedState'
 import { SmartBuffer } from 'smart-buffer'
 import { HardwareMessageRetimer, HardwareTimeBasis } from '@electricui/protocol-binary-codecs'
 
@@ -68,5 +68,38 @@ export class SensorCodec extends Codec<SensorInterface> {
     }
 
     return settings
+  }
+}
+
+/**
+ * Settings Codec
+ */
+export class ModuleSettingsCodec extends Codec<ModuleSettingsType>{
+  filter(message: Message<any, MessageMetadata>): boolean {
+    return message.messageID === 'settings'
+  }
+
+  encode(payload: ModuleSettingsType, message: Message<ModuleSettingsType, MessageMetadata>): Buffer {
+    const packet = new SmartBuffer({ size: 12})
+    packet.writeUInt8(payload.begin_flag)
+    packet.writeUInt8(payload.end_flag)
+    packet.writeUInt16BE(0)
+    packet.writeUInt32LE(payload.trigger_signal)
+    packet.writeUInt32LE(payload.refresh_rate)
+
+    return packet.toBuffer()
+  }
+
+  decode(payload: Buffer, message: Message<Buffer, MessageMetadata>): ModuleSettingsType {
+    const reader = SmartBuffer.fromBuffer(payload)
+
+    const settings_data: ModuleSettingsType = {
+      begin_flag: reader.readUInt8(),
+      end_flag: reader.readUInt8(1),
+      trigger_signal: reader.readUInt32LE(4),
+      refresh_rate: reader.readUInt32LE(8),
+    }
+
+    return settings_data
   }
 }

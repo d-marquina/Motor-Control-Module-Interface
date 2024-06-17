@@ -28,7 +28,7 @@ import { HeartbeatConnectionMetadataReporter } from '@electricui/protocol-binary
 import { SerialPort } from 'serialport'
 import { usb } from 'usb'
 import { USBHintProducer } from '@electricui/transport-node-usb-discovery'
-import { LEDCodec, SensorCodec } from './codecs'
+import { LEDCodec, ModuleSettingsCodec, SensorCodec } from './codecs'
 import { CodecDuplexPipelineWithDefaults, HardwareTimeBasis } from '@electricui/protocol-binary-codecs'
 
 const typeCache = new TypeCache()
@@ -76,6 +76,7 @@ const serialTransportFactory = new TransportFactory(
     const customCodecs = [
       new LEDCodec(), // Create each instance of the codecs
       new SensorCodec(hardwareTimeBasis),
+      new ModuleSettingsCodec(),
     ]
 
     // Add custom codecs.
