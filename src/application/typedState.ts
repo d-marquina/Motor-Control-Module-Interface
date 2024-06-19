@@ -14,8 +14,10 @@ declare global {
     led_state: number
     lit_time: number
     MCM_angle: number
-    MCM_test_flag: number
-    MCM_motor_speed: number
+    MCM_en_mot: number
+    MCM_mot_sp: number
+    MCM_pid_mode: number
+    MCM_set_pt: number
 
     settings: ModuleSettingsType
 

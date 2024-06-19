@@ -8,7 +8,7 @@ import {
   ZoomBrush
 } from '@electricui/components-desktop-charts'
 
-import { Card } from '@blueprintjs/core'
+import { Card, Divider } from '@blueprintjs/core'
 import { Box, Composition } from 'atomic-layout'
 import { IntervalRequester } from '@electricui/components-core'
 import { LightBulb } from '../../components/LightBulb'
@@ -70,73 +70,117 @@ export const OverviewPage = (props: RouteComponentProps) => {
     <React.Fragment>
       <IntervalRequester interval={50} variables={['led_state']} />
       <IntervalRequester interval={50} variables={['MCM_angle']} />
-      <IntervalRequester interval={50} variables={['MCM_test_flag']} />      
-      <IntervalRequester interval={50} variables={['MCM_motor_speed']} />
+      <IntervalRequester interval={50} variables={['MCM_en_mot']}/>
+      <IntervalRequester interval={50} variables={['MCM_mot_sp']}/>
+      <IntervalRequester interval={50} variables={['MCM_pid_mode']}/>
+      <IntervalRequester interval={50} variables={['MCM_set_pt']}/>
 
-      <Composition areas={layoutDescription} gap={10} autoCols="1fr">
+      <Composition areas={layoutDescription} gap={10} templateCols="2fr 3fr">
         {Areas => (
           <React.Fragment>
 
             <Areas.Slider>
               <Card>
-                <div style={{ margin: 20 }}>
-                  <Slider
-                    min={20}
-                    max={1020}
-                    stepSize={10}
-                    labelStepSize={100}
-                    sendOnlyOnRelease
-                  >
-                    <Slider.Handle accessor="lit_time" />
-                  </Slider>
-                </div>
+                <Composition height={"55vh"}>
 
-                <div>
-                  Angulo: <Printer accessor="MCM_angle" />
-                </div>
-
-                <div>
-                  <Switch
-                    unchecked={0}
-                    checked={10}
-                    accessor={state => state.MCM_test_flag}
-                    writer={(state, value) => {
-                      state.MCM_test_flag = value
-                    }}
-                  >
-                    Toggle Motor State
-                  </Switch>
-                </div>
-
-                <div>
-                  <Slider
-                    min={0}
-                    max={1000}
-                    stepSize={10}
-                    labelStepSize={100}
-                    sendOnlyOnRelease
-                  >
-                    <Slider.Handle accessor="MCM_motor_speed" />
-                  </Slider>
-                </div>
                 <Box>
-                  <Switch
-                    unchecked={0}
-                    checked={1}
-                    accessor={state => state.settings.begin_flag}
-                    writer={(state,value) => {
-                      state.settings.begin_flag = value
-                    }}
-                  >
-                    Begin Test
-                  </Switch>
+                  <Card>
+                    <Composition templateCols="1fr 1fr">
+                      <Switch
+                        unchecked={0}
+                        checked={1}
+                        accessor={state => state.MCM_en_mot}
+                        writer={(state, value) => {
+                          state.MCM_en_mot = value
+                        }}
+                        large
+                        innerLabel="Disabled"
+                        innerLabelChecked="Enabled"
+                      >
+                        Motor Driver
+                      </Switch>
+                      
+                      <Switch
+                        unchecked={0}
+                        checked={1}
+                        accessor={state => state.MCM_pid_mode}
+                        writer={(state,value) => {
+                          state.MCM_pid_mode = value
+                        }}
+                        large
+                        innerLabel="Disabled"
+                        innerLabelChecked="Enabled"
+                      >
+                        PID Mode
+                      </Switch>
+                    </Composition>                    
+                  </Card>                  
                 </Box>
+
+                <Box>
+                  <Card>
+                    <Composition gapRow={20}>
+                      <Box>
+                        <p> Set manual motor speed [steps/s]:</p>
+                        <Slider
+                          min={0}
+                          max={1000}
+                          stepSize={10}
+                          labelStepSize={100}
+                          sendOnlyOnRelease
+                        >
+                          <Slider.Handle accessor="MCM_mot_sp" />
+                        </Slider>
+                      </Box>
+                      
+                      <Box>
+                        Angle measured [°]: <Printer accessor="MCM_angle" />
+                      </Box>
+                    </Composition>                    
+                  </Card>                
+                </Box>
+
+                <Box>
+                  <Card>
+                    <Composition gapRow={20}>
+                      <Box>
+                        <p> Select a set point angle [°] (avoid limits):</p>
+                        <Slider
+                          min={0}
+                          max={360}
+                          stepSize={10}
+                          labelStepSize={60}
+                          sendOnlyOnRelease
+                        >
+                          <Slider.Handle accessor="MCM_set_pt" />
+                        </Slider>
+                      </Box>
+                  
+                      <Box>
+                        <Switch
+                          unchecked={0}
+                          checked={1}
+                          accessor={state => state.settings.begin_flag}
+                          writer={(state,value) => {
+                            state.settings.begin_flag = value
+                          }}
+                        >
+                          Record data
+                        </Switch>
+                      </Box>
+                    </Composition>
+                  </Card>
+                </Box>                
+
+                
+
+                </Composition>
               </Card>
             </Areas.Slider>
 
             <Areas.Chart1>
               <Card>
-                <ChartContainer height={"40vh"}>
+                <ChartContainer height={"55vh"}>
                   <LineChart
                     dataSource={angleSensorDS}
                     step='after'    
@@ -155,17 +199,8 @@ export const OverviewPage = (props: RouteComponentProps) => {
             
             <Areas.Chart2>
               <Card>
-                <div style={{ textAlign: 'center', marginBottom: '1em' }}>
-                  <b>LED State</b>
-                </div>
-                <ChartContainer height={"15vh"}>
-                  <LineChart dataSource={ledStateDataSource} />
-                  <RealTimeDomain window={10000} />
-                  <TimeAxis />
-                  <VerticalAxis />
-                </ChartContainer>
 
-                <ChartContainer height={"20vh"}>
+                <ChartContainer height={"18vh"}>
                   <LineChart
                     dataSource={angleSensorDS}
                     step='after'                
