@@ -2,7 +2,7 @@
   "arcVersionRange": ">=0.5.0",
   "author": "dmarquina@tecsup.edu.pe",
   "build": {
-    "appId": "electric.ui",
+    "appId": "motor.control.module.interface",
     "directories": {
       "output": "release/"
     },
@@ -17,7 +17,7 @@
       "target": "dmg"
     },
     "npmRebuild": false,
-    "productName": "Electric UI",
+    "productName": "Motor Control Module Interface",
     "win": {
       "target": "zip"
     }
@@ -188,5 +188,5 @@
   "templateName": "electron",
   "templateVersion": "25.0.0",
   "userID": "Ohe8P6MujzOC6AO6RP8k0RFinubvgIBamLvthEutCg==",
-  "version": "0.1.0"
+  "version": "1.0.0"
 }
