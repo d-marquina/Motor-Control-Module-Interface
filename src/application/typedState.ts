@@ -18,6 +18,11 @@ declare global {
     MCM_mot_sp: number
     MCM_pid_mode: number
     MCM_set_pt: number
+    MCM_b0: number
+    MCM_b1: number
+    MCM_b2: number
+    MCM_a1: number
+    MCM_Ts: number
 
     settings: ModuleSettingsType
 

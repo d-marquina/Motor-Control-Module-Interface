@@ -5,7 +5,13 @@ import {
   TimeAxis,
   VerticalAxis,
   TriggerDomain,
-  ZoomBrush
+  ZoomBrush,
+  useMouseSignal,
+  MouseCapture,
+  VerticalLineAnnotation,
+  HorizontalLineAnnotation,
+  PointAnnotation,
+  DataSourcePrinter
 } from '@electricui/components-desktop-charts'
 
 import { Card, Divider } from '@blueprintjs/core'
@@ -14,10 +20,10 @@ import { IntervalRequester } from '@electricui/components-core'
 import { LightBulb } from '../../components/LightBulb'
 import { useMessageDataSource } from '@electricui/core-timeseries'
 import { useDataTransformer } from '@electricui/timeseries-react'
-import { filter } from '@electricui/dataflow'
+import { closestTemporally, filter } from '@electricui/dataflow'
 import React from 'react'
 import { RouteComponentProps } from '@reach/router'
-import { Slider } from '@electricui/components-desktop-blueprint'
+import { Dropdown, NumberInput, Slider } from '@electricui/components-desktop-blueprint'
 import { Printer } from '@electricui/components-desktop'
 import { Switch } from '@electricui/components-desktop-blueprint'
 
@@ -57,6 +63,7 @@ const layoutDescription = `
 export const OverviewPage = (props: RouteComponentProps) => {
   const ledStateDataSource = useMessageDataSource('led_state')
   const angleSensorDS = useMessageDataSource('angle_sensor')
+  const setPointDS = useMessageDataSource('set_pt_stream')
   const settingsDS = useMessageDataSource('settings')
 
   const triggerDS = useDataTransformer(() => {   
@@ -66,26 +73,101 @@ export const OverviewPage = (props: RouteComponentProps) => {
     return eventsAboveThreshold
   })
 
+  const [mouseSignal, captureRef] = useMouseSignal()
+  const closestEvent = useDataTransformer(() => {
+    return closestTemporally(angleSensorDS, mouseSignal, data => data.x)
+  })
+
+  let PID_mode = 3
+  let MCM_Kp = 1
+  let MCM_Ki = 1
+  let MCM_Kd = 1
+  let MCM_Kd_unformatted = 1
+
+  function assign_gains(pid_mode = 0){
+    let Kp = 0
+    let Ki = 0
+    let Kd = 0
+    let Kd_unfotmatted = 0
+    // P
+    if (PID_mode == 0){
+      Kp = 1
+    }
+    // PD
+    if (PID_mode == 1){
+      Kp = 1
+      Kd = 0.001
+      Kd_unfotmatted = 1
+    }
+    //PI
+    if (PID_mode == 2){
+      Kp = 1
+      Ki = 1
+    }
+    // PID
+    if (PID_mode == 3){
+      Kp = 1
+      Ki = 1
+      Kd = 0.001
+      Kd_unfotmatted = 1
+    }
+    return [Kp, Ki, Kd, Kd_unfotmatted]
+  }
+
+  function calculate_coeff(Ts_ms = 10){
+    let b0 = 0
+    let b1 = 0
+    let b2 = 0
+    let a1 = 0
+    let MCM_Ts = Ts_ms/1000
+    // P
+    if (PID_mode == 0){
+      b0 = MCM_Kp
+    }
+    // PD
+    if (PID_mode == 1){
+      b0 = MCM_Kp + MCM_Kd/MCM_Ts 
+      b1 = -MCM_Kd/MCM_Ts
+    }
+    //PI
+    if (PID_mode == 2){
+      b0 = 0.5*MCM_Ki*MCM_Ts + MCM_Kp 
+      b1 = 0.5*MCM_Ki*MCM_Ts - MCM_Kp
+      a1 = 1
+    }
+    // PID
+    if (PID_mode == 3){
+      b0 = 0.5*MCM_Ki*MCM_Ts + MCM_Kp + MCM_Kd/MCM_Ts
+      b1 = 0.5*MCM_Ki*MCM_Ts - MCM_Kp -2*MCM_Kd/MCM_Ts
+      b2 = MCM_Kd/MCM_Ts
+      a1 = 1
+    }
+    return [b0, b1, b2, a1]
+  }
+
   return (
     <React.Fragment>
-      <IntervalRequester interval={50} variables={['led_state']} />
-      <IntervalRequester interval={50} variables={['MCM_angle']} />
-      <IntervalRequester interval={50} variables={['MCM_en_mot']}/>
-      <IntervalRequester interval={50} variables={['MCM_mot_sp']}/>
-      <IntervalRequester interval={50} variables={['MCM_pid_mode']}/>
-      <IntervalRequester interval={50} variables={['MCM_set_pt']}/>
+      <IntervalRequester interval={150} variables={['led_state']} />
+      <IntervalRequester interval={150} variables={['MCM_angle']} />
+      <IntervalRequester interval={150} variables={['MCM_en_mot']}/>
+      <IntervalRequester interval={150} variables={['MCM_mot_sp']}/>
+      <IntervalRequester interval={150} variables={['MCM_pid_mode']}/>
+      <IntervalRequester interval={150} variables={['MCM_set_pt']}/>
+      <IntervalRequester interval={150} variables={['MCM_b0']}/>
+      <IntervalRequester interval={150} variables={['MCM_b1']}/>
+      <IntervalRequester interval={150} variables={['MCM_b2']}/>
+      <IntervalRequester interval={150} variables={['MCM_a1']}/>
+      <IntervalRequester interval={150} variables={['MCM_Ts']}/>
 
       <Composition areas={layoutDescription} gap={10} templateCols="2fr 3fr">
         {Areas => (
           <React.Fragment>
 
             <Areas.Slider>
-              <Card>
-                <Composition height={"55vh"}>
-
-                <Box>
-                  <Card>
-                    <Composition templateCols="1fr 1fr">
+              <Composition height={"64vh"} paddingVertical={"1vh"}>
+                <Card >
+                  <Box  paddingVertical={"1vh"}>                    
+                    <Composition templateCols="1fr 1fr" height={"4vh"} paddingHorizontal={"1vw"}>
                       <Switch
                         unchecked={0}
                         checked={1}
@@ -113,110 +195,286 @@ export const OverviewPage = (props: RouteComponentProps) => {
                       >
                         PID Mode
                       </Switch>
-                    </Composition>                    
-                  </Card>                  
-                </Box>
+                    </Composition>    
+                  </Box>
 
-                <Box>
-                  <Card>
-                    <Composition gapRow={20}>
+                  <Divider/>
+
+                  <Box  paddingVertical={"1vh"}>
+                    <Composition gapRow={"1vh"} height={"10vh"} paddingHorizontal={"1vw"}>
                       <Box>
                         <p> Set manual motor speed [steps/s]:</p>
                         <Slider
                           min={0}
-                          max={1000}
-                          stepSize={10}
-                          labelStepSize={100}
+                          max={5000}
+                          stepSize={100}
+                          labelStepSize={500}
                           sendOnlyOnRelease
                         >
                           <Slider.Handle accessor="MCM_mot_sp" />
                         </Slider>
                       </Box>
-                      
-                      <Box>
-                        Angle measured [°]: <Printer accessor="MCM_angle" />
-                      </Box>
-                    </Composition>                    
-                  </Card>                
-                </Box>
+                    </Composition>     
+                  </Box>
 
-                <Box>
-                  <Card>
-                    <Composition gapRow={20}>
-                      <Box>
-                        <p> Select a set point angle [°] (avoid limits):</p>
-                        <Slider
-                          min={0}
-                          max={360}
-                          stepSize={10}
-                          labelStepSize={60}
-                          sendOnlyOnRelease
-                        >
-                          <Slider.Handle accessor="MCM_set_pt" />
-                        </Slider>
+                  <Divider/>
+
+                  <Box paddingVertical={"1vh"} paddingHorizontal={"1vw"}>
+                    <Composition gapRow={"1vh"} height={"10vh"}>
+                      <p> Select a set point angle [°] (avoid limits):</p>
+                      <Slider
+                        min={50}
+                        max={350}
+                        stepSize={10}
+                        labelStepSize={50}
+                        sendOnlyOnRelease
+                      >
+                        <Slider.Handle accessor="MCM_set_pt" />
+                      </Slider>
+                    </Composition>
+                  </Box>
+
+                  <Divider/>
+
+                  <Box>
+                    <Composition templateCols="5fr 3fr" gapRow={"1vh"} paddingTop={"1vh"} paddingHorizontal={"1vw"} height={"24vh"}>
+                      
+                      <Box row={1} col={1}>
+                        <Composition  templateCols="5fr 3fr" alignItems='center'>
+                          <p>Select controller type:</p>
+                          <Composition justifyItems='end'>
+                            <Dropdown
+                              accessor={state => PID_mode} 
+                              placeholder={selectedOption =>
+                                selectedOption ? `${selectedOption.text}` : 'Select Mode'
+                              }
+                              writer={(state,value) => {
+                                PID_mode = value,
+                                [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
+                              }}>
+                              <Dropdown.Option value={0} text="P"/>
+                              <Dropdown.Option value={1} text="PD"/>
+                              <Dropdown.Option value={2} text="PI"/>
+                              <Dropdown.Option value={3} text="PID"/>
+                            </Dropdown>
+                          </Composition>
+                        </Composition>                          
                       </Box>
-                  
-                      <Box>
-                        <Switch
-                          unchecked={0}
-                          checked={1}
-                          accessor={state => state.settings.begin_flag}
-                          writer={(state,value) => {
-                            state.settings.begin_flag = value
-                          }}
-                        >
-                          Record data
-                        </Switch>
+                      
+                      <Box row={2} col={1}>
+                        <Composition templateCols="1fr 3fr" alignItems='end'>
+                          <p>Ts [ms]</p>
+                          <Composition justifyItems='end'>
+                            <Printer accessor={"MCM_Ts"}/>
+                          </Composition>
+                        </Composition>                          
+                      </Box>
+
+                      <Box row={3} col={1}>
+                        <Composition templateCols="1fr 3fr" alignItems='end'>
+                          <p>Kp</p>
+                          <Composition justifyItems='end'>
+                            <NumberInput
+                              accessor={state => MCM_Kp}
+                              writer={(state, value) => {
+                                MCM_Kp = value,
+                                [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
+                              }}
+                            />
+                          </Composition>
+                        </Composition>                          
+                      </Box>
+
+                      <Box row={4} col={1}>
+                        <Composition templateCols="1fr 3fr" alignItems='end'>
+                          <p>Ki</p>
+                          <Composition justifyItems='end'>
+                            <NumberInput
+                              accessor={state => MCM_Ki}
+                              writer={(state, value) => {
+                                MCM_Ki = value,
+                                [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
+                              }}
+                            />
+                          </Composition>
+                        </Composition>                          
+                      </Box>
+
+                      <Box row={5} col={1}>
+                        <Composition templateCols="1fr 3fr" alignItems='end'>
+                          <p>Kd [/1000]</p>
+                          <Composition justifyItems='end'>
+                            <NumberInput
+                              accessor={state => MCM_Kd_unformatted}
+                              writer={(state, value) => {
+                                MCM_Kd_unformatted = value,
+                                MCM_Kd = value/1000,
+                                [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
+                              }}
+                            />
+                          </Composition>
+                        </Composition>                          
+                      </Box>                       
+
+                      <Box row={2} col={2}>
+                        <Composition templateCols="3fr 1fr" justifyItems='end'>
+                          <p>b0:</p>
+                          <Printer accessor="MCM_b0"/>
+                        </Composition>                          
+                      </Box>
+
+                      <Box row={3} col={2}>
+                        <Composition templateCols="3fr 1fr" justifyItems='end'>
+                          <p>b1:</p>
+                          <Printer accessor="MCM_b1"/>
+                        </Composition>                          
+                      </Box>
+
+                      <Box row={4} col={2}>
+                        <Composition templateCols="3fr 1fr" justifyItems='end'>
+                          <p>b2:</p>
+                          <Printer accessor="MCM_b2"/>
+                        </Composition>                          
+                      </Box>
+
+                      <Box row={5} col={2}>
+                        <Composition templateCols="3fr 1fr" justifyItems='end'>
+                          <p>a1:</p>
+                          <Printer accessor="MCM_a1"/>
+                        </Composition>                          
                       </Box>
                     </Composition>
-                  </Card>
-                </Box>                
+                  </Box>
 
-                
-
-                </Composition>
-              </Card>
+                </Card>
+              </Composition>
             </Areas.Slider>
 
             <Areas.Chart1>
-              <Card>
-                <ChartContainer height={"55vh"}>
-                  <LineChart
-                    dataSource={angleSensorDS}
-                    step='after'    
-                  />
-                  <RealTimeDomain
-                    window={10000}
-                    delay={100}
-                    yMin={-10}
-                    yMax={380}
-                  />
-                  <TimeAxis />
-                  <VerticalAxis />
-                </ChartContainer>
-              </Card>            
+              <Composition height={"64vh"} paddingVertical={"1vh"}>
+                <Card>
+                  <Composition templateCols='2fr 2fr 1fr' paddingBottom={"4vh"}>
+                    <Card>
+                      <Composition templateCols='2fr 1fr' height={"4vh"} alignContent="center">
+                        <Box row={1} col={1}>
+                          <p>Measured angle [°]:</p> 
+                        </Box>
+
+                        <Box row={1} col={2}>
+                          <Printer accessor="MCM_angle"/> 
+                        </Box>
+
+                        <Box row={2} col={1}>
+                          <p>Measured error [°]:</p>
+                        </Box>
+
+                        <Box row={2} col={2}>
+                          <Printer accessor={state => state.MCM_set_pt - state.MCM_angle}/> 
+                        </Box>
+                                         
+                      </Composition>
+                    </Card>
+
+                    <Card>
+                      <Composition templateCols='2fr 1fr' height={"4vh"} alignContent="center">
+                        <Box row={1} col={1}>
+                          <p>Angle at cursor [°]:</p>
+                        </Box>
+
+                        <Box row={1} col={2}>
+                          <DataSourcePrinter
+                            dataSource={closestEvent}
+                            accessor={event => event.data}/>
+                        </Box>
+
+                        <Box row={2} col={1}>
+                          <p>Time at cursor [ms]:</p>
+                        </Box>
+
+                        <Box row={2} col={2}>
+                          <DataSourcePrinter
+                            dataSource={closestEvent}
+                            accessor={event => event.time}/>
+                        </Box>
+                        
+                      </Composition>
+                    </Card>
+
+                    <Composition justifyContent='end' height={"6vh"} alignContent='center' >
+                      <Switch
+                        unchecked={0}
+                        checked={1}
+                        accessor={state => state.settings.begin_flag}
+                        writer={(state,value) => {
+                          state.settings.begin_flag = value
+                        }}
+                      >
+                        Record data (10 s)
+                      </Switch>
+                    </Composition>              
+                  </Composition>
+
+                  <ChartContainer height={"45vh"}>
+                    <LineChart
+                      dataSource={angleSensorDS}
+                      step='after'    
+                    />
+                    <LineChart
+                      dataSource={setPointDS}
+                      step='after'
+                    />
+                    <RealTimeDomain
+                      window={10000}
+                      delay={100}
+                      yMin={-10}
+                      yMax={380}
+                    />
+                    <TimeAxis label='Time [s]'/>
+                    <VerticalAxis
+                      label='Angle [°]'
+                      labelPadding={50}
+                      tickValues={[0, 60, 120, 180, 240, 300, 360]}
+                      />
+                    <MouseCapture captureRef={captureRef}/>
+                    <VerticalLineAnnotation
+                      dataSource={mouseSignal}
+                      accessor={data => data.x}
+                    />
+                    <HorizontalLineAnnotation
+                      dataSource={mouseSignal}
+                      accessor={data => data.y}
+                    />
+                    <PointAnnotation
+                    dataSource={closestEvent}
+                    accessor={event => ({x: event.time, y: event.data})}/>
+                    
+                  </ChartContainer>
+                </Card>     
+              </Composition>
             </Areas.Chart1>
             
             <Areas.Chart2>
-              <Card>
+              <Composition paddingVertical={"0.5vh"}>
+                <Card>
+                  <ChartContainer height={"14vh"}>
+                    <LineChart
+                      dataSource={angleSensorDS}
+                      step='after'                
+                    />
+                    <TriggerDomain
+                      window={10000}
+                      dataSource={triggerDS}
+                      yMin={-10}
+                      yMax={380}
+                    />
+                    <TimeAxis />
+                    <VerticalAxis />
+                    <ZoomBrush />
+                  </ChartContainer>
 
-                <ChartContainer height={"18vh"}>
-                  <LineChart
-                    dataSource={angleSensorDS}
-                    step='after'                
-                  />
-                  <TriggerDomain
-                    window={10000}
-                    dataSource={triggerDS}
-                    yMin={-10}
-                    yMax={380}
-                  />
-                  <TimeAxis />
-                  <VerticalAxis />
-                  <ZoomBrush />
-                </ChartContainer>
-
-              </Card>
+                </Card>
+              </Composition>
+              
             </Areas.Chart2>
 
             

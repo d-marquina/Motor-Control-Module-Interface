@@ -12,7 +12,7 @@ import {
 import './styles.css'
 
 import { FocusStyleManager } from '@blueprintjs/core'
-import { SensorInterface } from './config/codecs'
+import { SensorInterface, SetPointInterface } from './config/codecs'
 import { Message } from '@electricui/core'
 FocusStyleManager.onlyShowFocusOnTabs()
 
@@ -29,6 +29,15 @@ const queryableMessageIDProvider = new QueryableMessageIDProvider(
 )
 
 queryableMessageIDProvider.setCustomProcessor('angle_sensor', (message: Message<SensorInterface>, emit) => {
+  if (!message.payload) {
+    // If there's no payload, do nothing
+    return
+  }
+  // Emit an event with the data 
+  emit(new Event(message.payload.timestamp, message.payload.data))
+})
+
+queryableMessageIDProvider.setCustomProcessor('set_pt_stream', (message: Message<SetPointInterface>, emit) => {
   if (!message.payload) {
     // If there's no payload, do nothing
     return

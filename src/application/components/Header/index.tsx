@@ -85,7 +85,7 @@ export const Header = (
               }}
               active={page === ''}
             />
-            <Button
+            {/*<Button
               minimal
               large
               icon="settings"
@@ -94,7 +94,7 @@ export const Header = (
                 navigate(`/devices/${props.deviceID}/secondary`)
               }}
               active={page === 'secondary'}
-            />
+            />*/}
           </Navbar.Group>{' '}
         </div>
       </Navbar>

@@ -72,7 +72,44 @@ export class SensorCodec extends Codec<SensorInterface> {
 }
 
 /**
- * Settings Codec
+ * Set Point codec
+ */
+export interface SetPointInterface{
+  timestamp: number
+  data: number
+}
+
+export class SetPointCodec extends Codec<SetPointInterface> {
+  private retimer: HardwareMessageRetimer
+
+  constructor(timebasis: HardwareTimeBasis) {
+    super()
+    this.retimer = new HardwareMessageRetimer(timebasis)
+  }
+
+  filter(message: Message<any, MessageMetadata>): boolean {
+    return message.messageID === 'set_pt_stream'
+  }
+
+  encode(payload: SetPointInterface, message: Message<SetPointInterface, MessageMetadata>): Buffer {
+
+    throw new Error('The signal data is read only.')
+  }
+
+  decode(payload: Buffer, message: Message<Buffer, MessageMetadata>): SetPointInterface{
+    const reader = SmartBuffer.fromBuffer(payload)
+
+    const settings: SetPointInterface = {
+      timestamp: this.retimer.exchange(reader.readUInt32LE()),
+      data: reader.readFloatLE(),
+    }
+
+    return settings
+  }
+}
+
+/**
+ * Module Settings Codec
  */
 export class ModuleSettingsCodec extends Codec<ModuleSettingsType>{
   filter(message: Message<any, MessageMetadata>): boolean {
