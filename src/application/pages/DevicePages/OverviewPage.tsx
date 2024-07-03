@@ -157,11 +157,11 @@ export const OverviewPage = (props: RouteComponentProps) => {
     <React.Fragment>
       <IntervalRequester interval={200} variables={['led_state']} />
       <IntervalRequester interval={200} variables={['MCM_angle']} />
-      <IntervalRequester interval={200} variables={['MCM_en_mot']}/>
+      {/*<IntervalRequester interval={200} variables={['MCM_en_mot']}/>
       <IntervalRequester interval={200} variables={['MCM_mot_sp']}/>
       <IntervalRequester interval={200} variables={['MCM_pid_mode']}/>
       <IntervalRequester interval={200} variables={['MCM_set_pt']}/>
-      {/*<IntervalRequester interval={200} variables={['MCM_b0']}/>
+      <IntervalRequester interval={200} variables={['MCM_b0']}/>
       <IntervalRequester interval={200} variables={['MCM_b1']}/>
       <IntervalRequester interval={200} variables={['MCM_b2']}/>
       <IntervalRequester interval={200} variables={['MCM_a1']}/>
@@ -258,10 +258,10 @@ export const OverviewPage = (props: RouteComponentProps) => {
                     <Composition gapRow={"1vh"} height={"10vh"}>
                       <p> Select a set point angle [°] (avoid limits):</p>
                       <Slider
-                        min={50}
-                        max={350}
+                        min={0}
+                        max={360}
                         stepSize={10}
-                        labelStepSize={50}
+                        labelStepSize={60}
                         sendOnlyOnRelease
                       >
                         <Slider.Handle accessor="MCM_set_pt" />
@@ -388,7 +388,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
             <Areas.Chart1>
               <Composition height={"64vh"} paddingVertical={"1vh"}>
                 <Card>
-                  <Composition templateCols='2fr 2fr 1fr' paddingBottom={"4vh"}>
+                  <Composition templateCols='2fr 2fr 2fr' paddingBottom={"4vh"}>
                     <Card>
                       <Composition templateCols='2fr 1fr' height={"4vh"} alignContent="center">
                         <Box row={1} col={1}>
@@ -446,6 +446,25 @@ export const OverviewPage = (props: RouteComponentProps) => {
                       >
                         Record data (10 s)
                       </Switch>
+                      <Composition templateCols='1fr 4fr'>
+                        <p>n:</p>
+                        <NumberInput
+                          accessor={state => state.MCM_tr_n}
+                          writer={(state, value) => {
+                            state.MCM_tr_n = value
+                          }}
+                        />
+                      </Composition>
+                      <Composition templateCols='1fr 4fr'>
+                        <p>d:</p>
+                        <NumberInput
+                          accessor={state => state.MCM_tr_d}
+                          writer={(state, value) => {
+                            state.MCM_tr_d = value
+                          }}
+                        />
+                      </Composition>
+                      
                     </Composition>              
                   </Composition>
 
