@@ -16,6 +16,7 @@ declare global {
     MCM_angle: number
     MCM_en_mot: number
     MCM_mot_sp: number
+    MCM_ustep: number
     MCM_pid_mode: number
     MCM_set_pt: number
     MCM_b0: number

@@ -78,6 +78,8 @@ export const OverviewPage = (props: RouteComponentProps) => {
     return closestTemporally(angleSensorDS, mouseSignal, data => data.x)
   })
 
+  let UI_msp_rpm = 0
+
   let PID_mode = 3
   let MCM_Kp = 1
   let MCM_Ki = 1
@@ -145,19 +147,25 @@ export const OverviewPage = (props: RouteComponentProps) => {
     return [b0, b1, b2, a1]
   }
 
+  function zeroUIMotorSpeed(driver_state = 0){
+    if (driver_state === 0){
+      UI_msp_rpm = 0
+    }
+  }
+
   return (
     <React.Fragment>
-      <IntervalRequester interval={150} variables={['led_state']} />
-      <IntervalRequester interval={150} variables={['MCM_angle']} />
-      <IntervalRequester interval={150} variables={['MCM_en_mot']}/>
-      <IntervalRequester interval={150} variables={['MCM_mot_sp']}/>
-      <IntervalRequester interval={150} variables={['MCM_pid_mode']}/>
-      <IntervalRequester interval={150} variables={['MCM_set_pt']}/>
-      <IntervalRequester interval={150} variables={['MCM_b0']}/>
-      <IntervalRequester interval={150} variables={['MCM_b1']}/>
-      <IntervalRequester interval={150} variables={['MCM_b2']}/>
-      <IntervalRequester interval={150} variables={['MCM_a1']}/>
-      <IntervalRequester interval={150} variables={['MCM_Ts']}/>
+      <IntervalRequester interval={200} variables={['led_state']} />
+      <IntervalRequester interval={200} variables={['MCM_angle']} />
+      <IntervalRequester interval={200} variables={['MCM_en_mot']}/>
+      <IntervalRequester interval={200} variables={['MCM_mot_sp']}/>
+      <IntervalRequester interval={200} variables={['MCM_pid_mode']}/>
+      <IntervalRequester interval={200} variables={['MCM_set_pt']}/>
+      {/*<IntervalRequester interval={200} variables={['MCM_b0']}/>
+      <IntervalRequester interval={200} variables={['MCM_b1']}/>
+      <IntervalRequester interval={200} variables={['MCM_b2']}/>
+      <IntervalRequester interval={200} variables={['MCM_a1']}/>
+      <IntervalRequester interval={200} variables={['MCM_Ts']}/>*/}
 
       <Composition areas={layoutDescription} gap={10} templateCols="2fr 3fr">
         {Areas => (
@@ -173,7 +181,8 @@ export const OverviewPage = (props: RouteComponentProps) => {
                         checked={1}
                         accessor={state => state.MCM_en_mot}
                         writer={(state, value) => {
-                          state.MCM_en_mot = value
+                          state.MCM_en_mot = value,
+                          zeroUIMotorSpeed(value)
                         }}
                         large
                         innerLabel="Disabled"
@@ -203,15 +212,41 @@ export const OverviewPage = (props: RouteComponentProps) => {
                   <Box  paddingVertical={"1vh"}>
                     <Composition gapRow={"1vh"} height={"10vh"} paddingHorizontal={"1vw"}>
                       <Box>
-                        <p> Set manual motor speed [steps/s]:</p>
+                        <Composition templateCols='3fr 2fr'>
+                          <p> Set manual motor speed [RPM]:</p>
+                            <Composition justifyContent='end'>
+                              <Dropdown
+                                accessor={state => state.MCM_ustep} 
+                                placeholder={selectedOption =>
+                                  selectedOption ? `${selectedOption.text}` : 'Select Microsteps'
+                                }
+                                writer={(state,value) => {
+                                  state.MCM_ustep = value,
+                                  state.MCM_mot_sp = UI_msp_rpm * state.MCM_ustep / 0.3
+                                }}>
+                                <Dropdown.Option value={1} text="Full steps"/>
+                                <Dropdown.Option value={2} text="1/2 steps"/>
+                                <Dropdown.Option value={4} text="1/4 steps"/>
+                                <Dropdown.Option value={8} text="1/8 steps"/>
+                                <Dropdown.Option value={16} text="1/16 steps"/>
+                                <Dropdown.Option value={32} text="1/32 steps"/>
+                              </Dropdown>
+                            </Composition>
+                        </Composition>
                         <Slider
                           min={0}
-                          max={5000}
-                          stepSize={100}
-                          labelStepSize={500}
+                          max={210}
+                          stepSize={10}
+                          labelStepSize={30}
                           sendOnlyOnRelease
+                          writer={(state, values) => {
+                            UI_msp_rpm = values.UI_motor_speed_at_RPM,
+                            state.MCM_mot_sp = UI_msp_rpm * state.MCM_ustep / 0.3                          
+                          }}
                         >
-                          <Slider.Handle accessor="MCM_mot_sp" />
+                          <Slider.Handle
+                            name="UI_motor_speed_at_RPM"
+                            accessor={state => UI_msp_rpm}/>
                         </Slider>
                       </Box>
                     </Composition>     
