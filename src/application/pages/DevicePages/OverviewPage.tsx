@@ -234,7 +234,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
                             </Composition>
                         </Composition>
                         <Slider
-                          min={0}
+                          min={-30}
                           max={210}
                           stepSize={10}
                           labelStepSize={30}
@@ -258,8 +258,8 @@ export const OverviewPage = (props: RouteComponentProps) => {
                     <Composition gapRow={"1vh"} height={"10vh"}>
                       <p> Select a set point angle [°] (avoid limits):</p>
                       <Slider
-                        min={0}
-                        max={360}
+                        min={-180}
+                        max={180}
                         stepSize={10}
                         labelStepSize={60}
                         sendOnlyOnRelease
