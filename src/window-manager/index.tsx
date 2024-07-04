@@ -37,10 +37,10 @@ function createMainWindow() {
       v8CacheOptions: 'bypassHeatCheck', // https://www.youtube.com/watch?v=YqHOUy2rYZ8
       enableBlinkFeatures: 'CSSColorSchemeUARendering', // Enable dark scrollbars in dark mode
     },
-    minHeight: 680,
-    minWidth: 1200,
-    height: 680,
-    width: 1200,
+    minHeight: 820,
+    minWidth: 1440,
+    height: 820,
+    width: 1440,
     title: 'Electric UI',
     backgroundColor: '#191b1d', // This needs to be set to something so the background on resize can be changed to match the dark / light mode theme
     show: false, // The window is shown once the transport manager is ready

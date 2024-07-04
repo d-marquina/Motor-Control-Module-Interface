@@ -19,6 +19,8 @@ declare global {
     MCM_ustep: number
     MCM_pid_mode: number
     MCM_set_pt: number
+    MCM_tr_n: number
+    MCM_tr_d: number
     MCM_b0: number
     MCM_b1: number
     MCM_b2: number
