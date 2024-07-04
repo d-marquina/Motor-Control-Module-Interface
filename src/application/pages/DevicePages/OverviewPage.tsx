@@ -157,15 +157,6 @@ export const OverviewPage = (props: RouteComponentProps) => {
     <React.Fragment>
       <IntervalRequester interval={200} variables={['led_state']} />
       <IntervalRequester interval={200} variables={['MCM_angle']} />
-      {/*<IntervalRequester interval={200} variables={['MCM_en_mot']}/>
-      <IntervalRequester interval={200} variables={['MCM_mot_sp']}/>
-      <IntervalRequester interval={200} variables={['MCM_pid_mode']}/>
-      <IntervalRequester interval={200} variables={['MCM_set_pt']}/>
-      <IntervalRequester interval={200} variables={['MCM_b0']}/>
-      <IntervalRequester interval={200} variables={['MCM_b1']}/>
-      <IntervalRequester interval={200} variables={['MCM_b2']}/>
-      <IntervalRequester interval={200} variables={['MCM_a1']}/>
-      <IntervalRequester interval={200} variables={['MCM_Ts']}/>*/}
 
       <Composition areas={layoutDescription} gap={10} templateCols="2fr 3fr">
         {Areas => (
@@ -234,10 +225,10 @@ export const OverviewPage = (props: RouteComponentProps) => {
                             </Composition>
                         </Composition>
                         <Slider
-                          min={-30}
-                          max={210}
+                          min={-150}
+                          max={150}
                           stepSize={10}
-                          labelStepSize={30}
+                          labelStepSize={50}
                           sendOnlyOnRelease
                           writer={(state, values) => {
                             UI_msp_rpm = values.UI_motor_speed_at_RPM,
@@ -315,6 +306,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
                                 MCM_Kp = value,
                                 [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
                               }}
+                              min={1}
                             />
                           </Composition>
                         </Composition>                          
@@ -330,6 +322,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
                                 MCM_Ki = value,
                                 [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
                               }}
+                              min={1}
                             />
                           </Composition>
                         </Composition>                          
@@ -346,6 +339,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
                                 MCM_Kd = value/1000,
                                 [state.MCM_b0, state.MCM_b1, state.MCM_b2, state.MCM_a1] = calculate_coeff(state.MCM_Ts)
                               }}
+                              min={1}
                             />
                           </Composition>
                         </Composition>                          
@@ -388,7 +382,32 @@ export const OverviewPage = (props: RouteComponentProps) => {
             <Areas.Chart1>
               <Composition height={"64vh"} paddingVertical={"1vh"}>
                 <Card>
-                  <Composition templateCols='2fr 2fr 2fr' paddingBottom={"4vh"}>
+                  <Composition templateCols='6fr 5fr 5fr' paddingBottom={"4vh"}>
+
+                    <Composition justifyContent='center' height={"10vh"} alignContent='center' >
+                      <p>Transmission Ratio: i = n/d</p>
+                      <Composition templateCols='1fr 4fr'>
+                        <p>n:</p>
+                        <NumberInput
+                          accessor={state => state.MCM_tr_n}
+                          writer={(state, value) => {
+                            state.MCM_tr_n = value
+                          }}
+                          min={1}
+                        />
+                      </Composition>
+                      <Composition templateCols='1fr 4fr'>
+                        <p>d:</p>
+                        <NumberInput
+                          accessor={state => state.MCM_tr_d}
+                          writer={(state, value) => {
+                            state.MCM_tr_d = value
+                          }}
+                          min={1}
+                        />
+                      </Composition>
+                    </Composition>
+
                     <Card>
                       <Composition templateCols='2fr 1fr' height={"4vh"} alignContent="center">
                         <Box row={1} col={1}>
@@ -435,40 +454,9 @@ export const OverviewPage = (props: RouteComponentProps) => {
                       </Composition>
                     </Card>
 
-                    <Composition justifyContent='end' height={"6vh"} alignContent='center' >
-                      <Switch
-                        unchecked={0}
-                        checked={1}
-                        accessor={state => state.settings.begin_flag}
-                        writer={(state,value) => {
-                          state.settings.begin_flag = value
-                        }}
-                      >
-                        Record data (10 s)
-                      </Switch>
-                      <Composition templateCols='1fr 4fr'>
-                        <p>n:</p>
-                        <NumberInput
-                          accessor={state => state.MCM_tr_n}
-                          writer={(state, value) => {
-                            state.MCM_tr_n = value
-                          }}
-                        />
-                      </Composition>
-                      <Composition templateCols='1fr 4fr'>
-                        <p>d:</p>
-                        <NumberInput
-                          accessor={state => state.MCM_tr_d}
-                          writer={(state, value) => {
-                            state.MCM_tr_d = value
-                          }}
-                        />
-                      </Composition>
-                      
-                    </Composition>              
                   </Composition>
 
-                  <ChartContainer height={"45vh"}>
+                  <ChartContainer height={"44.25vh"}>
                     <LineChart
                       dataSource={angleSensorDS}
                       step='after'    
@@ -480,14 +468,14 @@ export const OverviewPage = (props: RouteComponentProps) => {
                     <RealTimeDomain
                       window={10000}
                       delay={100}
-                      yMin={-10}
-                      yMax={380}
+                      yMin={-190}
+                      yMax={190}
                     />
                     <TimeAxis label='Time [s]'/>
                     <VerticalAxis
                       label='Angle [°]'
                       labelPadding={50}
-                      tickValues={[0, 60, 120, 180, 240, 300, 360]}
+                      tickValues={[-180, -120, -60, 0, 60, 120, 180]}
                       />
                     <MouseCapture captureRef={captureRef}/>
                     <VerticalLineAnnotation
@@ -510,27 +498,42 @@ export const OverviewPage = (props: RouteComponentProps) => {
             <Areas.Chart2>
               <Composition paddingVertical={"0.5vh"}>
                 <Card>
-                  <ChartContainer height={"14vh"}>
-                    <LineChart
-                      dataSource={angleSensorDS}
-                      step='after'                
-                    />
-                    <TriggerDomain
-                      window={10000}
-                      dataSource={triggerDS}
-                      yMin={-10}
-                      yMax={380}
-                    />
-                    <TimeAxis />
-                    <VerticalAxis />
-                    <ZoomBrush />
-                  </ChartContainer>
+                  <Composition templateCols='1fr 11fr'>
+                    <Composition>
+                      <p>Record data (10 s)</p>
+                      <Switch
+                        unchecked={0}
+                        checked={1}
+                        accessor={state => state.settings.begin_flag}
+                        writer={(state,value) => {
+                          state.settings.begin_flag = value
+                        }}
+                        large
+                        innerLabel="Disabled"
+                        innerLabelChecked="Enabled"
+                      ></Switch>
+                    </Composition>
 
+                    <ChartContainer height={"14vh"}>
+                      <LineChart
+                        dataSource={angleSensorDS}
+                        step='after'                
+                      />
+                      <TriggerDomain
+                        window={10000}
+                        dataSource={triggerDS}
+                        yMin={-200}
+                        yMax={200}
+                      />
+                      <TimeAxis />
+                      <VerticalAxis />
+                      <ZoomBrush />
+                    </ChartContainer>                      
+                  </Composition>
                 </Card>
               </Composition>
               
             </Areas.Chart2>
-
             
           </React.Fragment>
         )}
