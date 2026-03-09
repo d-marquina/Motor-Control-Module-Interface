@@ -1,3 +1,43 @@
+/**
+ * How to implement custom codec
+ * =============================
+ *
+ * This works when sending multiple variables at the same time.
+ *
+ * First, define a struct in uC's firmware, pay attention to its label, less than 15 characters.
+ * Then, add a type in /src/application/typedState.ts defining packet's members.
+ * After that, create a new codec in /src/transport-manager/config/codecs.tsx, it should decode bytes.
+ * Add that codec in /src/transport-manager/config/serial.tsx.
+ * Finally, declare globally your type /src/application/typedState.ts, using its label!!
+ * Import and call that data using the so important label.
+ * Apparently, PlatoformIO uses 4 bytes words for ESP32 and Arduino framework, but compressing it one next to the other
+ *  - For a struct with uint8, uint8, uint32 and uint32: {UI8|UI8|0|0}|{UI32}|{UI32}
+ *  - For a struct with uint8, uint8, uint16: {UI8|UI8|UI16}
+ *  - For a struct with uint8, uint16 uint8: {UI8|0|UI16}|{UI8|0|0|0}
+ *
+ * How to use timestamp
+ * ====================
+ *
+ * Follow: https://electricui.com/docs/examples/hardware-timestamping
+ *
+ * First, millis() is called on uController.
+ * Then, modify the codec to use HardwareMessageRetimer, but your type should be an interface, and it
+ * no loger is listed on declare global, it should be declared on codec.tsx.
+ * In serial.tsx, add HardwareTimeBasis.
+ * Finally, in /src/transport-manager/index.tsx, create an event using the interface.
+ * This method only accepts 2 variables inside codec, so, data should be sent as a buffer.
+ * 
+ * Redefinitions for WebStorm
+ * ==========================
+ * 
+ * Some classes are not recognized, so their definition must change taking ino account its original class name
+ * 
+ * import { Dropdown, NumberInput, RadioGroup, Slider as AnotherSlider } from '@electricui/components-desktop-blueprint'
+ * const Slider: typeof AnotherSlider = AnotherSlider
+ *
+ * This code has been written with arc 0.6.1, node 18 and electron@25.0.0 template.
+ */
+
 import {
   ChartContainer,
   LineChart,
@@ -23,37 +63,10 @@ import { useDataTransformer } from '@electricui/timeseries-react'
 import { closestTemporally, filter } from '@electricui/dataflow'
 import React from 'react'
 import { RouteComponentProps } from '@reach/router'
-import { Dropdown, NumberInput, Slider } from '@electricui/components-desktop-blueprint'
+import { Dropdown, NumberInput, RadioGroup, Slider } from '@electricui/components-desktop-blueprint'
 import { Printer } from '@electricui/components-desktop'
 import { Switch } from '@electricui/components-desktop-blueprint'
 
-/**
- * How to implement custom codec
- * 
- * This works when sending multiple variables at the same time.
- * 
- * First, define a struct in uC's firmware, pay attention to its label, less than 15 characters.
- * Then, add a type in /application/typedState.ts defining packet's members.
- * After that, create a new codec in /transport-manager/config/codecs.tsx, it should decode bytes.
- * Add that codec in /transport-manager/config/serial.tsx.
- * Finally, declare globally your type /application/typedState.ts, using its label!!
- * Import and call that data using the so important label.
- * Apparently, PlatoformIO uses 4 bytes words for ESP32 and Arduino framework, but compressing it one next to the other
- *  - For a struct with uint8, uint8, uint32 and uint32: {UI8|UI8|0|0}|{UI32}|{UI32}
- *  - For a struct with uint8, uint8, uint16: {UI8|UI8|UI16}
- *  - For a struct with uint8, uint16 uint8: {UI8|0|UI16}|{UI8|0|0|0}
- * 
- * How to use timestamp
- * 
- * Follow: https://electricui.com/docs/examples/hardware-timestamping
- * 
- * First, millis() is called on uController.
- * Then, modify the codec to use HardwareMessageRetimer, but your type should be an interface, and it 
- * no loger is listed on declare global, it should be declared on codec.tsx.
- * In serial.tsx, add HardwareTimeBasis.
- * Finally, in index.tsx, create an event.
- * This method only accepts 2 variables inside codec, so, data should be sent as a buffer.
- */
 
 const layoutDescription = `
   Slider Chart1
@@ -181,7 +194,7 @@ export const OverviewPage = (props: RouteComponentProps) => {
                       >
                         Motor Driver
                       </Switch>
-                      
+
                       <Switch
                         unchecked={0}
                         checked={1}
