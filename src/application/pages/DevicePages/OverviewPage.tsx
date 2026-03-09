@@ -22,7 +22,8 @@
  *
  * First, millis() is called on uController.
  * Then, modify the codec to use HardwareMessageRetimer, but your type should be an interface, and it
- * no loger is listed on declare global, it should be declared on codec.tsx.
+ * no loger is listed on declare global, it is declared on codec.tsx, but can, and should, be declared on
+ * /src/application/typedState.ts
  * In serial.tsx, add HardwareTimeBasis.
  * Finally, in /src/transport-manager/index.tsx, create an event using the interface.
  * This method only accepts 2 variables inside codec, so, data should be sent as a buffer.
